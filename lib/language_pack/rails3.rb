@@ -74,6 +74,18 @@ private
         if precompile.success?
           log "assets_precompile", :status => "success"
           puts "Asset precompilation completed (#{"%.2f" % precompile.time}s)"
+          if bundler.has_gem?('turbo-sprockets-rails3')
+            log("assets_clean_expired") do
+              run("env PATH=$PATH:bin bundle exec rake assets:clean_expired 2>&1")
+              if $?.success?
+                log "assets_clean_expired", :status => "success"
+                @cache.store "public/assets"
+              else
+                log "assets_clean_expired", :status => "failure"
+                @cache.clear "public/assets"
+              end
+            end
+          end
         else
           precompile_fail(precompile.output)
         end
